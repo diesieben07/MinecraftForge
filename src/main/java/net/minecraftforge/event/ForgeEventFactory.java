@@ -368,6 +368,11 @@ public class ForgeEventFactory
         return !MinecraftForge.EVENT_BUS.post(new EntityInteractEvent(player, entity));
     }
     
+    public static boolean canInteractAt(EntityPlayer player, Entity entity, Vec3 hitVec)
+    {
+    	return !MinecraftForge.EVENT_BUS.post(new EntityInteractEvent.InteractAt(player, entity, hitVec));
+    }
+    
     public static boolean canMountEntity(Entity entityMounting, Entity entityBeingMounted, boolean isMounting)
     {
         boolean isCanceled = MinecraftForge.EVENT_BUS.post(new EntityMountEvent(entityMounting, entityBeingMounted, entityMounting.worldObj, isMounting));

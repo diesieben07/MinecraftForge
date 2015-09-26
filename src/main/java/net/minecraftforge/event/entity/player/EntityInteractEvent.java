@@ -4,6 +4,7 @@ import net.minecraftforge.fml.common.eventhandler.Cancelable;
 import net.minecraftforge.fml.common.eventhandler.Event.HasResult;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.Vec3;
 
 /**
  * EntityInteractEvent is fired when a player interacts with an Entity.<br>
@@ -27,5 +28,18 @@ public class EntityInteractEvent extends PlayerEvent
     {
         super(player);
         this.target = target;
+    }
+    
+    public static class InteractAt extends EntityInteractEvent
+    {
+    	
+    	public final Vec3 hitVec;
+    	
+    	public InteractAt(EntityPlayer player, Entity target, Vec3 hitVec)
+    	{
+    		super(player, target);
+    		this.hitVec = hitVec;
+    	}
+    	
     }
 }
