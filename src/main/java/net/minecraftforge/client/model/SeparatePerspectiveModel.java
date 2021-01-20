@@ -42,6 +42,8 @@ import java.util.function.Function;
 
 public class SeparatePerspectiveModel implements IModelGeometry<SeparatePerspectiveModel>
 {
+    private static final ItemModelGenerator ITEM_MODEL_GENERATOR = new ItemModelGenerator();
+
     private final BlockModel baseModel;
     private final ImmutableMap<ItemCameraTransforms.TransformType, BlockModel> perspectives;
 
@@ -58,8 +60,17 @@ public class SeparatePerspectiveModel implements IModelGeometry<SeparatePerspect
                 owner.useSmoothLighting(), owner.isShadedInGui(), owner.isSideLit(),
                 spriteGetter.apply(owner.resolveTexture("particle")), overrides,
                 baseModel.bakeModel(bakery, baseModel, spriteGetter, modelTransform, modelLocation, owner.isSideLit()),
-                ImmutableMap.copyOf(Maps.transformValues(perspectives, value -> {
-                    return value.bakeModel(bakery, value, spriteGetter, modelTransform, modelLocation, owner.isSideLit());
+                ImmutableMap.copyOf(Maps.transformValues(perspectives, (BlockModel realModel) -> {
+                    BlockModel modelToBake;
+                    if (realModel.getRootModel() == ModelBakery.MODEL_GENERATED)
+                    {
+                        modelToBake = ITEM_MODEL_GENERATOR.makeItemModel(spriteGetter, realModel);
+                    }
+                    else
+                    {
+                        modelToBake = realModel;
+                    }
+                    return modelToBake.bakeModel(bakery, realModel, spriteGetter, modelTransform, modelLocation, owner.isSideLit());
                 }))
         );
     }
