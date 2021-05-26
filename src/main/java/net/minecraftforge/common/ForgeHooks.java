@@ -1324,6 +1324,11 @@ public class ForgeHooks
         return modpacks;
     }
 
+    public static ItemEntity createItemEntity(EntityType<? extends ItemEntity> type, World world)
+    {
+        return new ItemEntity(type, world);
+    }
+
     /**
      * Fixes MC-194811
      * When a structure mod is removed, this map may contain null keys. This will make the world unable to save if this persists.

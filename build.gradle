@@ -227,6 +227,8 @@ project(':forge') {
                 environment 'LAUNCHER_VERSION', SPEC_VERSION
                 property 'org.lwjgl.system.SharedLibraryExtractDirectory', 'lwjgl_dll'
                 property 'eventbus.checkTypesOnDispatch', 'true'
+                property 'forge.logging.markers', 'CLASSDUMP'
+                property 'forge.logging.classtransformer.level', 'trace'
 
                 ideaModule "${rootProject.name}.${project.name}.userdev"
 
@@ -519,6 +521,18 @@ project(':forge') {
                 cls = 'net/minecraft/item/Items'
                 name = 'field_151097_aZ'
                 replacement = 'net/minecraft/item/ShearsItem'
+            }
+        }
+    }
+
+    task findConstructorCallChecks(type: NewInstanceFinder, dependsOn: ['createJoinedSRG']) {
+        jar = tasks.getByName('createJoinedSRG').output
+        output = rootProject.file('src/main/resources/coremods/constructor_to_factory.json')
+        classes {
+            item_entities {
+                cls = 'net/minecraft/entity/item/ItemEntity'
+                targetClass = 'net/minecraftforge/common/ForgeHooks'
+                targetMethod = 'createItemEntity'
             }
         }
     }

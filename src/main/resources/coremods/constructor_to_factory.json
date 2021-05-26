@@ -1,0 +1,129 @@
+{
+    "item_entities": {
+        "cls": "net/minecraft/entity/item/ItemEntity",
+        "targetClass": "net/minecraftforge/common/ForgeHooks",
+        "targetMethod": "createItemEntity",
+        "targets": [
+            {
+                "owner": "net/minecraft/block/BeehiveBlock",
+                "name": "func_176208_a",
+                "desc": "(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/entity/player/PlayerEntity;)V"
+            },
+            {
+                "owner": "net/minecraft/block/Block",
+                "name": "func_180635_a",
+                "desc": "(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/item/ItemStack;)V"
+            },
+            {
+                "owner": "net/minecraft/block/ComposterBlock",
+                "name": "func_235489_d_",
+                "desc": "(Lnet/minecraft/block/BlockState;Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/BlockState;"
+            },
+            {
+                "owner": "net/minecraft/block/JukeboxBlock",
+                "name": "func_203419_a",
+                "desc": "(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;)V"
+            },
+            {
+                "owner": "net/minecraft/block/LecternBlock",
+                "name": "func_220150_d",
+                "desc": "(Lnet/minecraft/block/BlockState;Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;)V"
+            },
+            {
+                "owner": "net/minecraft/block/PumpkinBlock",
+                "name": "func_225533_a_",
+                "desc": "(Lnet/minecraft/block/BlockState;Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/util/Hand;Lnet/minecraft/util/math/BlockRayTraceResult;)Lnet/minecraft/util/ActionResultType;"
+            },
+            {
+                "owner": "net/minecraft/block/ShulkerBoxBlock",
+                "name": "func_176208_a",
+                "desc": "(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/entity/player/PlayerEntity;)V"
+            },
+            {
+                "owner": "net/minecraft/client/network/play/ClientPlayNetHandler",
+                "name": "func_147235_a",
+                "desc": "(Lnet/minecraft/network/play/server/SSpawnObjectPacket;)V"
+            },
+            {
+                "owner": "net/minecraft/command/impl/LootCommand",
+                "name": "func_218882_a",
+                "desc": "(Lnet/minecraft/world/server/ServerWorld;Lnet/minecraft/util/math/vector/Vector3d;Lnet/minecraft/item/ItemStack;)V"
+            },
+            {
+                "owner": "net/minecraft/dispenser/DefaultDispenseItemBehavior",
+                "name": "func_82486_a",
+                "desc": "(Lnet/minecraft/world/World;Lnet/minecraft/item/ItemStack;ILnet/minecraft/util/Direction;Lnet/minecraft/dispenser/IPosition;)V"
+            },
+            {
+                "owner": "net/minecraft/entity/Entity",
+                "name": "func_70099_a",
+                "desc": "(Lnet/minecraft/item/ItemStack;F)Lnet/minecraft/entity/item/ItemEntity;"
+            },
+            {
+                "owner": "net/minecraft/entity/LivingEntity",
+                "name": "func_226298_f_",
+                "desc": "(Lnet/minecraft/entity/LivingEntity;)V"
+            },
+            {
+                "owner": "net/minecraft/entity/ai/brain/BrainUtil",
+                "name": "func_233865_a_",
+                "desc": "(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/item/ItemStack;Lnet/minecraft/util/math/vector/Vector3d;)V"
+            },
+            {
+                "owner": "net/minecraft/entity/item/HangingEntity",
+                "name": "func_70099_a",
+                "desc": "(Lnet/minecraft/item/ItemStack;F)Lnet/minecraft/entity/item/ItemEntity;"
+            },
+            {
+                "owner": "net/minecraft/entity/item/ItemEntity",
+                "name": "func_234273_t_",
+                "desc": "()Lnet/minecraft/entity/item/ItemEntity;"
+            },
+            {
+                "owner": "net/minecraft/entity/passive/CatEntity$MorningGiftGoal",
+                "name": "func_220804_h",
+                "desc": "()V"
+            },
+            {
+                "owner": "net/minecraft/entity/passive/DolphinEntity$PlayWithItemsGoal",
+                "name": "func_220810_a",
+                "desc": "(Lnet/minecraft/item/ItemStack;)V"
+            },
+            {
+                "owner": "net/minecraft/entity/passive/FoxEntity",
+                "name": "func_213486_l",
+                "desc": "(Lnet/minecraft/item/ItemStack;)V"
+            },
+            {
+                "owner": "net/minecraft/entity/passive/FoxEntity",
+                "name": "func_213495_k",
+                "desc": "(Lnet/minecraft/item/ItemStack;)V"
+            },
+            {
+                "owner": "net/minecraft/entity/passive/MooshroomEntity",
+                "name": "func_230263_a_",
+                "desc": "(Lnet/minecraft/util/SoundCategory;)V"
+            },
+            {
+                "owner": "net/minecraft/entity/player/PlayerEntity",
+                "name": "func_146097_a",
+                "desc": "(Lnet/minecraft/item/ItemStack;ZZ)Lnet/minecraft/entity/item/ItemEntity;"
+            },
+            {
+                "owner": "net/minecraft/entity/projectile/EyeOfEnderEntity",
+                "name": "func_70071_h_",
+                "desc": "()V"
+            },
+            {
+                "owner": "net/minecraft/entity/projectile/FishingBobberEntity",
+                "name": "func_146034_e",
+                "desc": "(Lnet/minecraft/item/ItemStack;)I"
+            },
+            {
+                "owner": "net/minecraft/inventory/InventoryHelper",
+                "name": "func_180173_a",
+                "desc": "(Lnet/minecraft/world/World;DDDLnet/minecraft/item/ItemStack;)V"
+            }
+        ]
+    }
+}
