@@ -52,6 +52,10 @@ public class ItemStackHandler implements IItemHandler, IItemHandlerModifiable, I
         stacks = NonNullList.withSize(size, ItemStack.EMPTY);
     }
 
+    /**
+     * @param slot  Slot to modify
+     * @param stack ItemStack to set slot to (may be empty).
+     */
     @Override
     public void setStackInSlot(int slot, @Nonnull ItemStack stack)
     {

@@ -26,6 +26,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSyntaxException;
+
+import io.netty.buffer.Unpooled;
+import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.JSONUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.ExtensionPoint;
@@ -34,11 +37,17 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.BitSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+
+import javax.annotation.Nullable;
 
 import static net.minecraftforge.fml.network.FMLNetworkConstants.NETWORK;
 
@@ -92,57 +101,164 @@ public class FMLStatusPing {
     public static class Serializer {
         public static FMLStatusPing deserialize(JsonObject forgeData, JsonDeserializationContext ctx) {
             try {
-                final Map<ResourceLocation, Pair<String, Boolean>> channels = StreamSupport.stream(JSONUtils.getAsJsonArray(forgeData, "channels").spliterator(), false).
-                        map(JsonElement::getAsJsonObject).
-                        collect(Collectors.toMap(jo -> new ResourceLocation(JSONUtils.getAsString(jo, "res")),
-                                jo -> Pair.of(JSONUtils.getAsString(jo, "version"), JSONUtils.getAsBoolean(jo, "required")))
-                        );
-
-                final Map<String, String> mods = StreamSupport.stream(JSONUtils.getAsJsonArray(forgeData, "mods").spliterator(), false).
-                        map(JsonElement::getAsJsonObject).
-                        collect(Collectors.toMap(jo -> JSONUtils.getAsString(jo, "modId"), jo->JSONUtils.getAsString(jo, "modmarker")));
-
                 final int remoteFMLVersion = JSONUtils.getAsInt(forgeData, "fmlNetworkVersion");
                 final boolean truncated = JSONUtils.getAsBoolean(forgeData, "truncated", false);
-                return new FMLStatusPing(channels, mods, remoteFMLVersion, truncated);
+                final boolean hasCompressedData = forgeData.has("compr");
+                if (truncated && hasCompressedData)
+                {
+                    return deserializeCompressed(remoteFMLVersion, JSONUtils.getAsString(forgeData, "compr"));
+                }
+                else
+                {
+                    final Map<ResourceLocation, Pair<String, Boolean>> channels = StreamSupport.stream(JSONUtils.getAsJsonArray(forgeData, "channels").spliterator(), false).
+                            map(JsonElement::getAsJsonObject).
+                            collect(Collectors.toMap(jo -> new ResourceLocation(JSONUtils.getAsString(jo, "res")),
+                                    jo -> Pair.of(JSONUtils.getAsString(jo, "version"), JSONUtils.getAsBoolean(jo, "required")))
+                            );
+
+                    final Map<String, String> mods = StreamSupport.stream(JSONUtils.getAsJsonArray(forgeData, "mods").spliterator(), false).
+                            map(JsonElement::getAsJsonObject).
+                            collect(Collectors.toMap(jo -> JSONUtils.getAsString(jo, "modId"), jo->JSONUtils.getAsString(jo, "modmarker")));
+
+                    return new FMLStatusPing(channels, mods, remoteFMLVersion, truncated);
+                }
             } catch (JsonSyntaxException e) {
                 LOGGER.debug(NETWORK, "Encountered an error parsing status ping data", e);
                 return null;
             }
         }
 
+        private static void writeChannelList(PacketBuffer buf, FMLStatusPing forgeData, boolean required)
+        {
+            List<Map.Entry<ResourceLocation, Pair<String, Boolean>>> channels = forgeData.channels.entrySet().stream()
+                    .filter(entry -> entry.getValue().getRight() == required)
+                    .collect(Collectors.toList());
+            buf.writeVarInt(channels.size());
+            for (Map.Entry<ResourceLocation, Pair<String, Boolean>> entry : channels)
+            {
+                buf.writeResourceLocation(entry.getKey());
+                buf.writeUtf(entry.getValue().getLeft());
+            }
+        }
+
+        private static void writeModList(PacketBuffer buf, FMLStatusPing forgeData, boolean ignoreServerOnly)
+        {
+            // writes mods in two steps, once the ones with IGNORESERVERONLY
+            // ones the others
+            // this is done because IGNORESERVERONLY is huge and we don't want it on the wire all the time
+            List<Map.Entry<String, String>> mods = forgeData.mods.entrySet().stream()
+                    .filter(entry -> entry.getValue().equals(FMLNetworkConstants.IGNORESERVERONLY) == ignoreServerOnly)
+                    .collect(Collectors.toList());
+            buf.writeVarInt(mods.size());
+            for (Map.Entry<String, String> entry : mods)
+            {
+                buf.writeUtf(entry.getKey());
+                if (!ignoreServerOnly)
+                {
+                    buf.writeUtf(entry.getValue());
+                }
+            }
+        }
+
+        public static String serializeCompressed(FMLStatusPing forgeData)
+        {
+            PacketBuffer buf = new PacketBuffer(Unpooled.buffer());
+
+            // first write the channels
+            writeChannelList(buf, forgeData, true);
+            writeChannelList(buf, forgeData, false);
+
+            // now write the mods
+            writeModList(buf, forgeData, true);
+            writeModList(buf, forgeData, false);
+
+
+            byte[] bytes = new byte[buf.readableBytes()];
+            buf.readBytes(bytes);
+            return Base64.getEncoder().encodeToString(bytes);
+        }
+
+        private static void readChannelList(PacketBuffer buf, boolean required, Map<ResourceLocation, Pair<String, Boolean>> target)
+        {
+            int length = buf.readVarInt();
+            for (int i = 0; i < length; i++)
+            {
+                ResourceLocation channelName = buf.readResourceLocation();
+                String channelVersion = buf.readUtf();
+                target.put(channelName, Pair.of(channelVersion, required));
+            }
+        }
+
+        private static void readModsList(PacketBuffer buf, boolean ignoreServerOnly, Map<String, String> target)
+        {
+            // see writeModList
+            int length = buf.readVarInt();
+            for (int i = 0; i < length; i++)
+            {
+                String modId = buf.readUtf();
+                String modVersion;
+                if (ignoreServerOnly)
+                {
+                    modVersion = FMLNetworkConstants.IGNORESERVERONLY;
+                }
+                else
+                {
+                    modVersion = buf.readUtf();
+                }
+                target.put(modId, modVersion);
+            }
+        }
+
+        public static FMLStatusPing deserializeCompressed(int fmlNetVersion, String data)
+        {
+            byte[] bytes = Base64.getDecoder().decode(data);
+            PacketBuffer buf = new PacketBuffer(Unpooled.wrappedBuffer(bytes));
+
+            Map<ResourceLocation, Pair<String, Boolean>> channels = new HashMap<>();
+            Map<String, String> mods = new HashMap<>();
+            readChannelList(buf, true, channels);
+            readChannelList(buf, false, channels);
+
+            readModsList(buf, true, mods);
+            readModsList(buf, false, mods);
+
+            return new FMLStatusPing(channels, mods, fmlNetVersion, false);
+        }
+
         public static JsonObject serialize(FMLStatusPing forgeData, JsonSerializationContext ctx) {
-            JsonObject obj = new JsonObject();
-            JsonArray channels = new JsonArray();
             boolean truncated = forgeData.channels.size() > CHANNEL_TRUNCATE_LIMIT || forgeData.mods.size() > MOD_TRUNCATE_LIMIT;
             if (truncated && !warnedAboutTruncation)
             {
                 warnedAboutTruncation = true;
-                LOGGER.warn("Heuristically truncating mod and/or network channel list in server status ping packet. Compatibility report " +
-                        "in the multiplayer screen may be inaccurate.");
+                LOGGER.warn("Heuristically truncating mod and/or network channel list in server status ping packet. Compatibility report on older " +
+                        "Minecraft clients or external services may be inaccurate.");
             }
 
-            forgeData.channels.entrySet().stream().limit(CHANNEL_TRUNCATE_LIMIT).forEach(entry -> {
-                ResourceLocation namespace = entry.getKey();
-                Pair<String, Boolean> version = entry.getValue();
-                JsonObject mi = new JsonObject();
-                mi.addProperty("res", namespace.toString());
-                mi.addProperty("version", version.getLeft());
-                mi.addProperty("required", version.getRight());
-                channels.add(mi);
-            });
+            JsonObject obj = new JsonObject();
+            JsonArray channels = new JsonArray();
+            JsonArray modTestValues = new JsonArray();
+
+            if (truncated)
+            {
+                obj.addProperty("compr", serializeCompressed(forgeData));
+            } else
+            {
+                forgeData.channels.forEach((namespace, version) -> {
+                    JsonObject mi = new JsonObject();
+                    mi.addProperty("res", namespace.toString());
+                    mi.addProperty("version", version.getLeft());
+                    mi.addProperty("required", version.getRight());
+                    channels.add(mi);
+                });
+                forgeData.mods.forEach((modId, value) -> {
+                    JsonObject mi = new JsonObject();
+                    mi.addProperty("modId", modId);
+                    mi.addProperty("modmarker", value);
+                    modTestValues.add(mi);
+                });
+            }
 
             obj.add("channels", channels);
-
-            JsonArray modTestValues = new JsonArray();
-            forgeData.mods.entrySet().stream().limit(MOD_TRUNCATE_LIMIT).forEach(entry -> {
-                String modId = entry.getKey();
-                String value = entry.getValue();
-                JsonObject mi = new JsonObject();
-                mi.addProperty("modId", modId);
-                mi.addProperty("modmarker", value);
-                modTestValues.add(mi);
-            });
             obj.add("mods", modTestValues);
             obj.addProperty("fmlNetworkVersion", forgeData.fmlNetworkVer);
             obj.addProperty("truncated", truncated);

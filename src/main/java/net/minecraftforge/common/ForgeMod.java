@@ -47,6 +47,7 @@ import net.minecraftforge.fml.event.server.FMLServerStoppingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.fml.loading.progress.StartupMessageManager;
+import net.minecraftforge.fml.network.NetworkRegistry;
 import net.minecraftforge.network.VanillaPacketSplitter;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.server.command.EnumArgument;
@@ -160,6 +161,12 @@ public class ForgeMod implements WorldPersistenceHooks.WorldPersistenceHook
         MinecraftForge.EVENT_BUS.register(MinecraftForge.INTERNAL_HANDLER);
         MinecraftForge.EVENT_BUS.register(this);
         BiomeDictionary.init();
+
+        for (int i = 0; i < 400; i++)
+        {
+            NetworkRegistry.newEventChannel(new ResourceLocation("forge123", "channel_test" + i), () -> "1234", s -> true, s -> true);
+        }
+
     }
 
     public void preInit(FMLCommonSetupEvent evt)
